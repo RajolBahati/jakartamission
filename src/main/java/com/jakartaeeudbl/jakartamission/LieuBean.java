@@ -1,38 +1,52 @@
 package com.jakartaeeudbl.jakartamission;
 
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import java.io.Serializable;
+import java.util.List;
+import com.jakartaeeudbl.jakartamission.business.LieuEntrepriseBean;
 
 @Named(value = "lieuBean")
 @RequestScoped
 public class LieuBean implements Serializable {
 
-    private String nom;
-    private String description;
-    private Double latitude;
-    private Double longitude;
+    @Inject
+    private LieuEntrepriseBean lieuEntrepriseBean;
 
-    // Méthode appelée lors du clic sur le bouton "Ajouter"
-    public String ajouterLieu() {
-        // Ici, vous mettrez plus tard le code pour sauvegarder en base de données
-        System.out.println("Ajout du lieu : " + nom + " (" + latitude + ", " + longitude + ")");
-        
-        // Après l'ajout, on retourne vers la page d'accueil (ou on reste sur la même page)
-        return "home"; 
+    private Lieu lieu = new Lieu();
+
+    public LieuBean() {
     }
 
-    // --- Getters et Setters (Obligatoires pour JSF) ---
+    public Lieu getLieu() { return lieu; }
+    public void setLieu(Lieu lieu) { this.lieu = lieu; }
 
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
+    // Pour afficher la liste dans le tableau
+    public List<Lieu> getListeLieux() {
+        return lieuEntrepriseBean.listerTousLesLieux();
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    // SAUVEGARDER (Gère Création ET Modification)
+    public String sauvegarder() {
+        if (lieu.getId() == null) {
+            lieuEntrepriseBean.ajouterLieu(lieu); // Nouveau
+        } else {
+            lieuEntrepriseBean.modifierLieu(lieu); // Existant
+        }
+        lieu = new Lieu(); // Reset
+        return "visiter?faces-redirect=true"; // Retourne à la liste
+    }
 
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    // PRÉPARER MODIFICATION (Charge les données dans le formulaire)
+    public String chargerPourModification(Lieu l) {
+        this.lieu = l;
+        return "lieu"; // Va vers la page du formulaire
+    }
 
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    // SUPPRIMER
+    public String supprimer(Long id) {
+        lieuEntrepriseBean.supprimerLieu(id);
+        return "visiter?faces-redirect=true"; // Recharge la page
+    }
 }

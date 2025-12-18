@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+    <h:head>
+        <title>Liste des lieux</title>
+        <style>
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            th { background-color: #007BFF; color: white; }
+            tr:nth-child(even) { background-color: #f2f2f2; }
+            
+            .btn-action { text-decoration: none; padding: 5px 10px; border-radius: 4px; color: white; margin-right: 5px; }
+            .btn-edit { background-color: #ffc107; color: black; } /* Jaune */
+            .btn-delete { background-color: #dc3545; } /* Rouge */
+            .btn-add { background-color: #28a745; padding: 10px 20px; color: white; text-decoration: none; border-radius: 5px; }
+
+            /* --- NOUVEAUX STYLES POUR LE BOUTON RETOUR --- */
+            .btn {
+                display: inline-block;
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 5px;
+                font-family: sans-serif;
+                font-weight: bold;
+                color: white;
+                cursor: pointer;
+            }
+
+            .btn-retour {
+                background-color: #6c757d; /* Gris élégant */
+                border: 1px solid #6c757d;
+                margin-top: 20px; /* Espace au-dessus */
+            }
+
+            .btn-retour:hover {
+                background-color: #545b62; /* Gris plus foncé au survol */
+                text-decoration: none;
+            }
+        </style>
+    </h:head>
+    <h:body>
+        <h:form>
+            <h1>Liste des Lieux</h1>
+            
+            <h:commandLink value="+ Ajouter un nouveau lieu" action="lieu" styleClass="btn-add"/>
+            
+            <h:dataTable value="#{lieuBean.listeLieux}" var="item">
+                
+                <h:column>
+                    <f:facet name="header">Nom</f:facet>
+                    #{item.nom}
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Description</f:facet>
+                    #{item.description}
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Coordonnées</f:facet>
+                    #{item.latitude}, #{item.longitude}
+                </h:column>
+                
+                <h:column>
+                    <f:facet name="header">Actions</f:facet>
+                    <h:commandLink value="Modifier" 
+                                   action="#{lieuBean.chargerPourModification(item)}" 
+                                   styleClass="btn-action btn-edit" />
+                                   
+                    <h:commandLink value="Supprimer" 
+                                   action="#{lieuBean.supprimer(item.id)}" 
+                                   onclick="return confirm('Voulez-vous vraiment supprimer ?');"
+                                   styleClass="btn-action btn-delete" />
+                </h:column>
+                
+            </h:dataTable>
+            
+            <br/><br/>
+            <h:link outcome="home" value="⟵ Retour Accueil" styleClass="btn btn-retour"/>
+            
+        </h:form>
+    </h:body>
+</html>
