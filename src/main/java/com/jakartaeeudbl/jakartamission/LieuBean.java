@@ -1,5 +1,6 @@
 package com.jakartaeeudbl.jakartamission;
 
+import com.jakartaeeudbl.jakartamission.entities.Lieu;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;

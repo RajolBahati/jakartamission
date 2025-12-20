@@ -3,13 +3,13 @@ package com.jakartaeeudbl.jakartamission.business;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import com.jakartaeeudbl.jakartamission.Lieu;
+import com.jakartaeeudbl.jakartamission.entities.Lieu;
 import java.util.List;
 
 @Stateless
 public class LieuEntrepriseBean {
 
-    @PersistenceContext(unitName = "monUniteDePersistence")
+    @PersistenceContext(unitName = "MonUniteDePersistence")
     private EntityManager em;
 
     public void ajouterLieu(Lieu lieu) {
