@@ -30,4 +30,8 @@ public class LieuEntrepriseBean {
     public List<Lieu> listerTousLesLieux() {
         return em.createQuery("SELECT l FROM Lieu l", Lieu.class).getResultList();
     }
+
+    public Lieu trouverLieuParId(Long id) {
+        return em.find(Lieu.class, id);
+    }
 }

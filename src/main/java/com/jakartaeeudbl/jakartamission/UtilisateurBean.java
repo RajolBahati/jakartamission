@@ -1,84 +1,67 @@
 package com.jakartaeeudbl.jakartamission;
 
-import jakarta.inject.Named;
+import com.jakartaeeudbl.jakartamission.business.UtilisateurEntrepriseBean;
+import com.jakartaeeudbl.jakartamission.entities.Utilisateur;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.inject.Named;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import java.io.Serializable;
 
-// Import de votre EJB (Logique métier)
-import com.jakartaeeudbl.jakartamission.business.UtilisateurEntrepriseBean;
-
-@Named("utilisateurBean")
+@Named(value = "utilisateurBean")
 @RequestScoped
 public class UtilisateurBean implements Serializable {
-
-    // --- ATTRIBUTS AVEC VALIDATION ---
-    @NotBlank(message = "Le nom d'utilisateur est obligatoire")
-    @Size(min = 3, max = 50, message = "Le nom d'utilisateur doit avoir entre 3 et 50 caractères")
-    private String username;
-
-    @NotBlank(message = "L'email est obligatoire")
-    @Email(message = "L'email doit être valide")
-    private String email;
-
-    @NotBlank(message = "Le mot de passe est obligatoire")
-    @Size(min = 6, message = "Le mot de passe doit contenir au moins 6 caractères")
-    @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,}$",
-             message = "Le mot de passe doit contenir au moins une majuscule, un chiffre et un caractère spécial.")
-    private String password;
-
-    private String confirmPassword; // Pas de validation automatique ici, on le fait manuellement
-    
-    private String description;
 
     @Inject
     private UtilisateurEntrepriseBean utilisateurEntrepriseBean;
 
-    // --- MÉTHODE PRINCIPALE ---
-    public void ajouterUtilisateur() {
-        FacesContext context = FacesContext.getCurrentInstance();
+    // Champs du formulaire
+    private String username;
+    private String email;
+    private String password;
+    private String confirmPassword;
+    private String description;
 
-        // 1. Vérification de la confirmation du mot de passe
-        if (password != null && !password.equals(confirmPassword)) {
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Les mots de passe ne correspondent pas.", null));
-            return; // On arrête tout si ça ne matche pas
-        }
-
+    public String ajouterUtilisateur() {
         try {
-            // 2. Appel de la méthode métier (EJB)
-            utilisateurEntrepriseBean.ajouterUtilisateurEntreprise(username, email, password, description);
+            // 1. Vérification des mots de passe
+            if (!password.equals(confirmPassword)) {
+                FacesContext.getCurrentInstance().addMessage(null, 
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Les mots de passe ne correspondent pas", null));
+                return null;
+            }
 
-            // 3. SUCCÈS : On affiche le message vert
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Utilisateur ajouté avec succès", null));
+            // 2. Création de l'objet
+            Utilisateur nouvelUtilisateur = new Utilisateur();
+            
+            // --- CORRECTION DE L'ERREUR DE COMPILATION ICI ---
+            // On remplace setNomUtilisateur par setUsername
+            nouvelUtilisateur.setUsername(this.username); 
+            // -------------------------------------------------
+            
+            nouvelUtilisateur.setEmail(this.email);
+            nouvelUtilisateur.setPassword(this.password);
+            nouvelUtilisateur.setDescription(this.description);
 
-            // 4. On vide les champs du formulaire pour faire propre
-            username = "";
-            email = "";
-            password = "";
-            confirmPassword = "";
-            description = "";
+            // 3. Enregistrement via l'EJB
+            utilisateurEntrepriseBean.inscrire(nouvelUtilisateur);
+
+            // 4. Message de succès et redirection
+            FacesContext.getCurrentInstance().getExternalContext().getFlash().setKeepMessages(true);
+            FacesContext.getCurrentInstance().addMessage(null, 
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Compte créé ! Connectez-vous.", null));
+            
+            return "/index?faces-redirect=true";
             
         } catch (Exception e) {
-            // 5. GESTION DES ERREURS (Doublons ou autres)
-            
-            // On vérifie si l'erreur contient le mot clé "DOUBLON" envoyé par l'EJB
-            if (e.getMessage() != null && e.getMessage().contains("DOUBLON")) {
-                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Ce nom d'utilisateur et cette adresse existent déjà.", null));
-            } else {
-                // Erreur technique imprévue
-                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erreur technique : " + e.getMessage(), null));
-                e.printStackTrace(); // Pour le développeur (dans les logs)
-            }
+            FacesContext.getCurrentInstance().addMessage(null, 
+                new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erreur lors de l'inscription (Email déjà pris ?)", null));
+            return null;
         }
     }
 
-    // --- GETTERS & SETTERS (Standards) ---
+    // --- GETTERS ET SETTERS ---
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 

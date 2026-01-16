@@ -3,82 +3,58 @@ package com.jakartaeeudbl.jakartamission.business;
 import com.jakartaeeudbl.jakartamission.entities.Utilisateur;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional; // Demandé par l'énoncé
-import java.util.List;
 import org.mindrot.jbcrypt.BCrypt;
 
 @Stateless
 public class UtilisateurEntrepriseBean {
 
-    @PersistenceContext(unitName = "MonUniteDePersistence")
+    @PersistenceContext
     private EntityManager em;
 
-    // --- 1. AJOUTER (Modifié pour gérer doublons + Hachage) ---
-    @Transactional
-    public void ajouterUtilisateurEntreprise(String username, String email, String password, String description) throws Exception {
-        
-        // Vérification préalable (Demandé dans la partie TP Résolution)
-        if (existeDeja(username, email)) {
-            throw new Exception("DOUBLON");
+    public Utilisateur authentifier(String email, String password) {
+        Utilisateur user = trouverUtilisateurParEmail(email);
+        if (user != null && verifierMotDePasse(password, user.getPassword())) {
+            return user;
         }
-
-        // Utilisation du constructeur (Demandé par l'énoncé)
-        Utilisateur utilisateur = new Utilisateur(username, email, password, description);
-
-        // Hachage du mot de passe (Demandé par l'énoncé)
-        try {
-            String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-            utilisateur.setPassword(hashedPassword);
-        } catch (Exception e) {
-            // Fallback si BCrypt échoue (rare)
-            utilisateur.setPassword(password);
-        }
-
-        em.persist(utilisateur);
+        return null;
     }
 
-    // --- 2. LISTER TOUS LES UTILISATEURS (Demandé) ---
-    public List<Utilisateur> listerTousLesUtilisateurs() {
-        return em.createQuery("SELECT u FROM Utilisateur u", Utilisateur.class).getResultList();
-    }
-
-    // --- 3. SUPPRIMER (Demandé) ---
-    @Transactional
-    public void supprimerUtilisateur(Long id) {
-        Utilisateur utilisateur = em.find(Utilisateur.class, id);
-        if (utilisateur != null) {
-            em.remove(utilisateur);
-        }
-    }
-
-    // --- 4. TROUVER PAR ID (Demandé) ---
-    public Utilisateur trouverUtilisateurParId(Long id) {
-        return em.find(Utilisateur.class, id);
-    }
-
-    // --- 5. TROUVER PAR EMAIL (Demandé) ---
     public Utilisateur trouverUtilisateurParEmail(String email) {
         try {
             return em.createQuery("SELECT u FROM Utilisateur u WHERE u.email = :email", Utilisateur.class)
                     .setParameter("email", email)
                     .getSingleResult();
-        } catch (Exception e) {
+        } catch (NoResultException e) {
             return null;
         }
     }
 
-    // --- 6. VÉRIFIER MOT DE PASSE (Demandé) ---
-    public boolean verifierMotDePasse(String password, String hashedPassword) {
-        return BCrypt.checkpw(password, hashedPassword);
+    public boolean verifierMotDePasse(String passwordSaisi, String passwordHache) {
+        try {
+            return BCrypt.checkpw(passwordSaisi, passwordHache);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    // --- 7. MÉTHODE UTILITAIRE POUR LES DOUBLONS (Notre ajout pour le TP) ---
-    public boolean existeDeja(String username, String email) {
-        Long count = em.createQuery("SELECT COUNT(u) FROM Utilisateur u WHERE u.username = :username OR u.email = :email", Long.class)
-                .setParameter("username", username)
-                .setParameter("email", email)
-                .getSingleResult();
-        return count > 0;
+    public void inscrire(Utilisateur utilisateur) {
+        String hashed = BCrypt.hashpw(utilisateur.getPassword(), BCrypt.gensalt());
+        utilisateur.setPassword(hashed);
+        em.persist(utilisateur);
+    }
+
+    /**
+     * Met à jour les informations de l'utilisateur (Description et/ou Mot de passe)
+     */
+    public void modifier(Utilisateur utilisateur) {
+        // Si le mot de passe a été modifié (longueur courte = pas encore haché)
+        if (utilisateur.getPassword() != null && utilisateur.getPassword().length() < 30) {
+            String hashed = BCrypt.hashpw(utilisateur.getPassword(), BCrypt.gensalt());
+            utilisateur.setPassword(hashed);
+        }
+        // merge met à jour l'entrée existante dans la base de données
+        em.merge(utilisateur);
     }
 }
