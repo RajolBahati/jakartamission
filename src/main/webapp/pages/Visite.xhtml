@@ -1,37 +1,71 @@
 <?xml version='1.0' encoding='UTF-8' ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core">
-    <h:head>
-        <title>Visite</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
-    </h:head>
-    <h:body>
-        <div class="container mt-5">
-            <h1>Selectionner un lieu :</h1>
-            
-            <h:form id="selectionForm">
-                <div class="mb-3">
-                    <h:selectOneMenu value="#{lieuBean.selectedLieu}" styleClass="form-select">
-                        <f:selectItem itemLabel="-- Choisissez un lieu --" itemValue="#{null}" />
+<h:head>
+    <title>Gestion des Visites</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+</h:head>
+<h:body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="mb-4 text-primary">Interface Visite &amp; Météo</h2>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">Consulter la Météo</div>
+            <div class="card-body">
+                <h:form id="weatherForm">
+                    <label class="form-label">Choisir un lieu pour voir la météo :</label>
+                    <h:selectOneMenu value="#{visiteBean.selectedLieuId}" styleClass="form-select mb-3">
+                        <f:selectItem itemLabel="-- Sélectionner un lieu --" itemValue="" />
                         <f:selectItems value="#{lieuBean.listeLieux}" var="l" itemValue="#{l.id}" itemLabel="#{l.nom}"/>
-                        <f:ajax listener="#{lieuBean.updateWeatherMessage}" render="weatherDisplay"/>
+                        <f:ajax listener="#{visiteBean.chargerMeteo}" render="weatherResult" />
                     </h:selectOneMenu>
-                </div>
-            </h:form>
 
-            <h:panelGroup id="weatherDisplay" layout="block" class="mt-4 p-3 border rounded bg-light">
-                <h:outputText value="Information meteo : " styleClass="fw-bold"/>
-                <h:outputText id="weather" value="#{lieuBean.weatherMessage}"/>
-            </h:panelGroup>
-
-            <div class="mt-4">
-                <h:form id="navForm">
-                    <h:commandButton value="Visiter" action="visiter" styleClass="btn btn-primary"/>
-                    <h:link outcome="/home" value="Retour Accueil" styleClass="btn btn-secondary ms-2"/>
+                    <h:panelGroup id="weatherResult" layout="block" class="p-3 border rounded bg-white">
+                        <h:outputText value="Réponse API : " styleClass="fw-bold"/>
+                        <h:outputText value="#{visiteBean.weatherInfo}" styleClass="text-primary"/>
+                    </h:panelGroup>
                 </h:form>
             </div>
-            
-        </div> </h:body>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">Enregistrer une nouvelle visite</div>
+            <div class="card-body">
+                <h:form id="addVisiteForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de visite :</label>
+                            <h:inputText value="#{visiteBean.nouvelleVisite.dateVisite}" styleClass="form-control" placeholder="AAAA-MM-JJ">
+                                <f:convertDateTime pattern="yyyy-MM-dd" />
+                            </h:inputText>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Commentaire :</label>
+                            <h:inputText value="#{visiteBean.nouvelleVisite.commentaire}" styleClass="form-control" />
+                        </div>
+                    </div>
+                    <h:commandButton value="Valider la visite" action="#{visiteBean.enregistrerVisite}" styleClass="btn btn-success" />
+                </h:form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Historique des visites</div>
+            <div class="card-body">
+                <h:dataTable value="#{visiteBean.listeVisites}" var="v" styleClass="table table-striped">
+                    <h:column><f:facet name="header">Date</f:facet>#{v.dateVisite}</h:column>
+                    <h:column><f:facet name="header">Lieu</f:facet>#{v.lieu.nom}</h:column>
+                    <h:column><f:facet name="header">Utilisateur</f:facet>#{v.utilisateur.username}</h:column>
+                    <h:column><f:facet name="header">Commentaire</f:facet>#{v.commentaire}</h:column>
+                </h:dataTable>
+            </div>
+        </div>
+
+        <div class="mt-4 mb-5">
+            <h:link outcome="/home" value="Retour Accueil" styleClass="btn btn-secondary"/>
+        </div>
+    </div>
+</h:body>
 </html>
